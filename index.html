@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoFine Payment - سنتر عبدالله للتجارة</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700;900&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            fontFamily: { sans: ['"IBM Plex Sans Arabic"', 'sans-serif'] },
+            colors: {
+              brand: { 50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a' },
+              danger: { 100: '#fee2e2', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c' },
+              success: { 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' },
+              warning: { 100: '#fef3c7', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
+              legal: { 100: '#ede9fe', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9' }
+            }
+          }
+        }
+      };
+    </script>
+
+    <style>
+        body { font-family: 'IBM Plex Sans Arabic', sans-serif; background-color: #f1f5f9; overflow: hidden; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; }
+    </style>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel" data-presets="react,env">
+        const { useState, useEffect } = React;
+
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const icons = {
+                Dashboard: <g><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></g>,
+                ShoppingCart: <g><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></g>,
+                Wallet: <g><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></g>,
+                Receipt: <g><path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1Z"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/></g>,
+                Scale: <g><path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></g>,
+                MessageCircle: <g><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></g>,
+                Database: <g><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></g>,
+                User: <g><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>,
+                Search: <g><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></g>
+            };
+            return (
+                <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                    {icons[name] || <circle cx="12" cy="12" r="10"/>}
+                </svg>
+            );
+        };
+
+        const SCHEMA = {
+            customers: { title: 'العملاء', fields: [ {key:'id', label:'كود العميل', readOnly:true}, {key:'full_name', label:'الاسم بالكامل', type:'text', req:true}, {key:'national_id', label:'الرقم القومي', type:'text'}, {key:'phone', label:'الهاتف', type:'text'}, {key:'status', label:'الحالة', type:'select', opts:['منتظم', 'متأخر', 'متعثر', 'إجراء قانوني']}, {key:'risk_level', label:'تقييم المخاطر', type:'select', opts:['منخفض', 'متوسط', 'عالي']} ]},
+            guarantors: { title: 'الضامنين', fields: [ {key:'id', label:'كود الضامن', readOnly:true}, {key:'customer_id', label:'كود العميل المكفول', type:'text', req:true}, {key:'full_name', label:'الاسم', type:'text', req:true}, {key:'national_id', label:'الرقم القومي', type:'text'}, {key:'phone', label:'الهاتف', type:'text'}, {key:'relation', label:'صلة القرابة', type:'text'} ]},
+            products: { title: 'المخزون والمنتجات', fields: [ {key:'id', label:'كود', readOnly:true}, {key:'name', label:'المنتج', type:'text', req:true}, {key:'category', label:'التصنيف', type:'select', opts:['أجهزة كهربائية', 'إلكترونيات', 'أدوات منزلية', 'دراجات']}, {key:'cost_price', label:'التكلفة', type:'number'}, {key:'cash_price', label:'سعر الكاش', type:'number'}, {key:'installment_price', label:'سعر التقسيط', type:'number'}, {key:'stock', label:'المخزون', type:'number'} ]},
+            invoices: { title: 'المبيعات والفواتير', fields: [ {key:'id', label:'رقم الفاتورة', readOnly:true}, {key:'customer_id', label:'كود العميل', type:'text'}, {key:'type', label:'نوع البيع', type:'select', opts:['كاش', 'تقسيط']}, {key:'total', label:'الإجمالي', type:'number'}, {key:'paid', label:'المدفوع', type:'number'}, {key:'remaining', label:'المتبقي', type:'number'}, {key:'date', label:'التاريخ', type:'text'} ]},
+            installments: { title: 'جدول الأقساط', fields: [ {key:'id', label:'رقم القسط', readOnly:true}, {key:'invoice_id', label:'رقم الفاتورة', type:'text'}, {key:'customer_id', label:'كود العميل', type:'text'}, {key:'amount', label:'المبلغ', type:'number'}, {key:'due_date', label:'تاريخ الاستحقاق', type:'text'}, {key:'status', label:'الحالة', type:'select', opts:['مستحق', 'مدفوع', 'متأخر']} ]},
+            expenses: { title: 'المصروفات', fields: [ {key:'id', label:'رقم', readOnly:true}, {key:'category', label:'التصنيف', type:'select', opts:['مرتبات', 'مشتريات بضاعة', 'إدارية', 'تسويقية', 'نثريات']}, {key:'amount', label:'المبلغ', type:'number'}, {key:'date', label:'التاريخ', type:'text'}, {key:'description', label:'البيان', type:'text'} ]},
+            legal_cases: { title: 'الشئون القانونية', fields: [ {key:'id', label:'رقم الملف', readOnly:true}, {key:'target_type', label:'صفة الخصم', type:'select', opts:['عميل', 'ضامن']}, {key:'target_id', label:'كود الخصم', type:'text'}, {key:'case_number', label:'رقم القضية', type:'text'}, {key:'type', label:'نوع الإجراء', type:'select', opts:['إنذار', 'إيصال أمانة', 'شيك', 'حجز']}, {key:'status', label:'الحالة', type:'select', opts:['قيد التجهيز', 'بالمحكمة', 'حكم', 'تصالح']} ]},
+            transactions: { title: 'حركة الخزينة', fields: [ {key:'id', label:'رقم الحركة', readOnly:true}, {key:'type', label:'النوع', type:'select', opts:['دخل (in)', 'خرج (out)']}, {key:'amount', label:'المبلغ', type:'number'}, {key:'category', label:'التصنيف', type:'text'}, {key:'date', label:'التاريخ', type:'text'} ]}
+        };
+
+        const dbEngine = {
+            dbName: 'EcoFine_AbdullahCenter_DB',
+            db: null,
+            init: function() {
+                return new Promise((resolve) => {
+                    const req = indexedDB.open(this.dbName, 1);
+                    req.onupgradeneeded = (e) => {
+                        const d = e.target.result;
+                        Object.keys(SCHEMA).forEach(t => { if (!d.objectStoreNames.contains(t)) d.createObjectStore(t, { keyPath: 'id' }); });
+                    };
+                    req.onsuccess = (e) => { this.db = e.target.result; resolve(); };
+                });
+            },
+            fetch: function(table) {
+                return new Promise(res => {
+                    if (!this.db) return res([]);
+                    const req = this.db.transaction(table, 'readonly').objectStore(table).getAll();
+                    req.onsuccess = () => res(req.result || []);
+                });
+            },
+            insert: function(table, data) {
+                return new Promise(res => {
+                    const tx = this.db.transaction(table, 'readwrite');
+                    const id = data.id || `${table.slice(0,3).toUpperCase()}-${Date.now().toString().slice(-6)}`;
+                    const rec = { ...data, id };
+                    tx.objectStore(table).add(rec);
+                    tx.oncomplete = () => res(rec);
+                });
+            },
+            update: function(table, id, data) {
+                return new Promise(res => {
+                    const tx = this.db.transaction(table, 'readwrite');
+                    const rec = { ...data, id };
+                    tx.objectStore(table).put(rec);
+                    tx.oncomplete = () => res(rec);
+                });
+            }
+        };
+
+        function DashboardModule() {
+            const [stats, setStats] = useState({ expectedToday:0, collectedToday:0, totalLate:0, activeCustomers:0 });
+            const [searchQ, setSearchQ] = useState('');
+            const [customerInfo, setCustomerInfo] = useState(null);
+
+            const loadStats = async () => {
+                const today = new Date().toISOString().split('T')[0];
+                const insts = await dbEngine.fetch('installments');
+                const trans = await dbEngine.fetch('transactions');
+                const custs = await dbEngine.fetch('customers');
+
+                const expected = insts.filter(i => i.due_date === today && i.status !== 'مدفوع').reduce((a,b) => a + Number(b.amount || 0), 0);
+                const collected = trans.filter(t => t.date === today && t.type === 'دخل (in)').reduce((a,b) => a + Number(b.amount || 0), 0);
+                const late = insts.filter(i => i.status === 'متأخر').reduce((a,b) => a + Number(b.amount || 0), 0);
+                setStats({ expectedToday: expected, collectedToday: collected, totalLate: late, activeCustomers: custs.length });
+            };
+
+            useEffect(() => { loadStats(); }, []);
+
+            const handleSearch = async (e) => {
+                e.preventDefault();
+                if (!searchQ) return;
+                const custs = await dbEngine.fetch('customers');
+                const found = custs.find(c => c.national_id === searchQ || c.phone === searchQ || c.id === searchQ || (c.full_name || '').includes(searchQ));
+                if (!found) {
+                    alert('لم يتم العثور على العميل');
+                    setCustomerInfo(null);
+                    return;
+                }
+
+                const invs = await dbEngine.fetch('invoices');
+                const insts = await dbEngine.fetch('installments');
+                const guars = await dbEngine.fetch('guarantors');
+                setCustomerInfo({
+                    ...found,
+                    invoices: invs.filter(i => i.customer_id === found.id),
+                    installments: insts.filter(i => i.customer_id === found.id),
+                    guarantors: guars.filter(g => g.customer_id === found.id)
+                });
+            };
+
+            return (
+                <div className="flex flex-col h-full space-y-4 overflow-y-auto pr-2">
+                    <div className="grid grid-cols-4 gap-4">
+                        <div className="card p-4 border-r-4 border-blue-500"><div className="text-slate-500 text-xs font-bold">المتوقع تحصيله اليوم</div><div className="text-2xl font-black mt-1">{stats.expectedToday} <span className="text-xs">ج.م</span></div></div>
+                        <div className="card p-4 border-r-4 border-green-500"><div className="text-slate-500 text-xs font-bold">التحصيل الفعلي اليوم</div><div className="text-2xl font-black mt-1 text-green-600">{stats.collectedToday} <span className="text-xs">ج.م</span></div></div>
+                        <div className="card p-4 border-r-4 border-red-500"><div className="text-slate-500 text-xs font-bold">إجمالي المتأخرات (خطر)</div><div className="text-2xl font-black mt-1 text-red-600">{stats.totalLate} <span className="text-xs">ج.م</span></div></div>
+                        <div className="card p-4 border-r-4 border-purple-500"><div className="text-slate-500 text-xs font-bold">إجمالي العملاء</div><div className="text-2xl font-black mt-1">{stats.activeCustomers} <span className="text-xs">عميل</span></div></div>
+                    </div>
+
+                    <div className="card p-6 flex-1 flex flex-col">
+                        <h2 className="text-lg font-black mb-4 flex items-center gap-2"><Icon name="Search"/> الاستعلام الشامل وتقييم المخاطر</h2>
+                        <form onSubmit={handleSearch} className="flex gap-2 mb-6">
+                            <input type="text" value={searchQ} onChange={e=>setSearchQ(e.target.value)} placeholder="بحث بالاسم، الرقم القومي، الهاتف، أو كود العميل..." className="flex-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-brand-500" />
+                            <button type="submit" className="bg-brand-900 text-white px-8 rounded-xl font-bold">استعلام</button>
+                        </form>
+
+                        {customerInfo ? (
+                            <div className="bg-slate-50 p-6 rounded-xl border flex-1 overflow-y-auto">
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h3 className="text-2xl font-black text-brand-900">{customerInfo.full_name}</h3>
+                                        <div className="text-sm text-slate-500 mt-1">كود: {customerInfo.id} | هاتف: {customerInfo.phone} | قومي: {customerInfo.national_id}</div>
+                                    </div>
+                                    <div className="text-left">
+                                        <div className={`px-4 py-1 rounded-full text-sm font-bold inline-block mb-1 ${customerInfo.status==='منتظم'?'bg-green-100 text-green-700':customerInfo.status==='متأخر'?'bg-warning-100 text-warning-700':'bg-danger-100 text-danger-700'}`}>الحالة: {customerInfo.status}</div>
+                                        <div className="text-xs font-bold text-slate-500">مستوى المخاطرة: {customerInfo.risk_level || 'غير محدد'}</div>
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div>
+                                        <h4 className="font-bold border-b pb-2 mb-3">الموقف المالي</h4>
+                                        <div className="space-y-2 text-sm">
+                                            <div className="flex justify-between"><span>إجمالي المسحوبات:</span> <span className="font-bold">{customerInfo.invoices.reduce((a,b)=>a+Number(b.total||0),0)} ج.م</span></div>
+                                            <div className="flex justify-between"><span>المدفوع:</span> <span className="font-bold text-green-600">{customerInfo.invoices.reduce((a,b)=>a+Number(b.paid||0),0)} ج.م</span></div>
+                                            <div className="flex justify-between"><span>المتبقي (المديونية):</span> <span className="font-bold text-red-600">{customerInfo.invoices.reduce((a,b)=>a+Number(b.remaining||0),0)} ج.م</span></div>
+                                            <div className="flex justify-between"><span>الأقساط المتأخرة:</span> <span className="font-bold text-warning-600">{customerInfo.installments.filter(i=>i.status==='متأخر').length} أقساط</span></div>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold border-b pb-2 mb-3">الضامنين والارتباطات</h4>
+                                        {customerInfo.guarantors.length === 0 ? <p className="text-sm text-slate-400">لا يوجد ضامنين مسجلين</p> : (
+                                            <ul className="space-y-2 text-sm">
+                                                {customerInfo.guarantors.map(g => (
+                                                    <li key={g.id} className="bg-white p-2 border rounded-lg flex justify-between">
+                                                        <span>{g.full_name} ({g.relation})</span>
+                                                        <span className="text-slate-500">{g.phone}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        ) : <div className="flex-1 flex items-center justify-center text-slate-400 font-bold">أدخل بيانات العميل للاستعلام الشامل</div>}
+                    </div>
+                </div>
+            );
+        }
+
+        function SalesModule() {
+            const [products, setProducts] = useState([]);
+            const [customers, setCustomers] = useState([]);
+            const [cart, setCart] = useState([]);
+            const [saleType, setSaleType] = useState('تقسيط');
+            const [selectedCustomer, setSelectedCustomer] = useState('');
+            const [downPayment, setDownPayment] = useState('');
+            const [months, setMonths] = useState(12);
+
+            useEffect(() => {
+                dbEngine.fetch('products').then(setProducts);
+                dbEngine.fetch('customers').then(setCustomers);
+            }, []);
+
+            const addToCart = (p) => {
+                if (Number(p.stock || 0) <= 0) return alert('المنتج غير متوفر');
+                const exist = cart.find(i => i.id === p.id);
+                if (exist) setCart(cart.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
+                else setCart([...cart, { ...p, qty: 1 }]);
+            };
+
+            const calculateTotal = () => cart.reduce((sum, item) => sum + (saleType === 'كاش' ? Number(item.cash_price || 0) : Number(item.installment_price || 0)) * item.qty, 0);
+
+            const handleCheckout = async () => {
+                if (cart.length === 0) return alert('السلة فارغة');
+                if (!selectedCustomer) return alert('يجب تحديد العميل');
+
+                const total = calculateTotal();
+                const paid = saleType === 'كاش' ? total : Number(downPayment || 0);
+                const monthsCount = Number(months || 0);
+                if (paid > total) return alert('المقدم أكبر من إجمالي الفاتورة');
+                if (saleType === 'تقسيط' && monthsCount <= 0) return alert('عدد الأشهر يجب أن يكون أكبر من صفر');
+
+                const remaining = total - paid;
+                const date = new Date().toISOString().split('T')[0];
+
+                const inv = await dbEngine.insert('invoices', { customer_id: selectedCustomer, type: saleType, total, paid, remaining, date });
+
+                if (paid > 0) {
+                    await dbEngine.insert('transactions', { type: 'دخل (in)', amount: paid, category: `مقدم/كاش فاتورة ${inv.id}`, date });
+                }
+
+                if (saleType === 'تقسيط' && remaining > 0) {
+                    const instAmount = Number((remaining / monthsCount).toFixed(2));
+                    for (let i = 1; i <= monthsCount; i++) {
+                        let d = new Date();
+                        d.setMonth(d.getMonth() + i);
+                        await dbEngine.insert('installments', { invoice_id: inv.id, customer_id: selectedCustomer, amount: instAmount, due_date: d.toISOString().split('T')[0], status: 'مستحق' });
+                    }
+                }
+
+                for (const item of cart) {
+                    const prd = products.find(p => p.id === item.id);
+                    await dbEngine.update('products', prd.id, { ...prd, stock: Number(prd.stock || 0) - item.qty });
+                }
+
+                alert('تم حفظ الفاتورة بنجاح!');
+                setCart([]); setDownPayment('');
+                dbEngine.fetch('products').then(setProducts);
+            };
+
+            return (
+                <div className="flex h-full gap-4">
+                    <div className="flex-[2] card p-6 flex flex-col">
+                        <h2 className="text-xl font-black mb-4">المنتجات (المخزون)</h2>
+                        <div className="grid grid-cols-3 gap-3 overflow-y-auto pr-2">
+                            {products.map(p => (
+                                <div key={p.id} onClick={() => addToCart(p)} className="border p-3 rounded-xl cursor-pointer hover:border-brand-500 hover:shadow-md transition bg-slate-50">
+                                    <div className="font-bold text-sm mb-2">{p.name}</div>
+                                    <div className="flex justify-between text-xs">
+                                        <div>كاش: <span className="font-bold text-brand-600">{p.cash_price}</span></div>
+                                        <div>قسط: <span className="font-bold text-purple-600">{p.installment_price}</span></div>
+                                    </div>
+                                    <div className="text-[10px] mt-1 text-slate-400">المتاح: {p.stock}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                    <div className="flex-1 card p-6 flex flex-col bg-slate-50">
+                        <h2 className="text-xl font-black mb-4">بيانات الفاتورة</h2>
+                        <div className="flex-1 overflow-y-auto mb-4 bg-white p-2 rounded-lg border">
+                            {cart.length===0 ? <div className="text-center text-slate-400 text-sm py-4">أضف منتجات</div> : cart.map((i,x)=>(
+                                <div key={x} className="flex justify-between text-sm p-2 border-b last:border-0">
+                                    <span>{i.name} (x{i.qty})</span>
+                                    <span className="font-bold">{(saleType==='كاش'?Number(i.cash_price):Number(i.installment_price))*i.qty}</span>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="space-y-3">
+                            <select value={saleType} onChange={e=>setSaleType(e.target.value)} className="w-full p-2 border rounded-lg font-bold"><option>كاش</option><option>تقسيط</option></select>
+                            <select value={selectedCustomer} onChange={e=>setSelectedCustomer(e.target.value)} className="w-full p-2 border rounded-lg">
+                                <option value="">-- اختر العميل --</option>
+                                {customers.map(c=><option key={c.id} value={c.id}>{c.full_name}</option>)}
+                            </select>
+                            {saleType === 'تقسيط' && (
+                                <div className="flex gap-2">
+                                    <input type="number" placeholder="المقدم" value={downPayment} onChange={e=>setDownPayment(e.target.value)} className="w-1/2 p-2 border rounded-lg" />
+                                    <input type="number" placeholder="عدد الأشهر" value={months} onChange={e=>setMonths(e.target.value)} className="w-1/2 p-2 border rounded-lg" />
+                                </div>
+                            )}
+                            <div className="bg-brand-900 text-white p-3 rounded-lg flex justify-between items-center mt-2"><span>الإجمالي:</span><span className="text-xl font-black">{calculateTotal()}</span></div>
+                            <button onClick={handleCheckout} className="w-full bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700">حفظ الفاتورة</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function CollectionModule() {
+            const [installments, setInstallments] = useState([]);
+            const [customers, setCustomers] = useState([]);
+
+            const load = async () => {
+                const insts = await dbEngine.fetch('installments');
+                const custs = await dbEngine.fetch('customers');
+                setInstallments(insts.filter(i => i.status !== 'مدفوع').sort((a,b) => new Date(a.due_date) - new Date(b.due_date)));
+                setCustomers(custs);
+            };
+            useEffect(() => { load(); }, []);
+
+            const handlePay = async (inst) => {
+                if (!confirm(`تأكيد تحصيل قسط بمبلغ ${inst.amount} ج.م؟`)) return;
+                const date = new Date().toISOString().split('T')[0];
+                await dbEngine.update('installments', inst.id, { ...inst, status: 'مدفوع' });
+                const invs = await dbEngine.fetch('invoices');
+                const inv = invs.find(i => i.id === inst.invoice_id);
+                if (inv) await dbEngine.update('invoices', inv.id, { ...inv, paid: Number(inv.paid) + Number(inst.amount), remaining: Number(inv.remaining) - Number(inst.amount) });
+                await dbEngine.insert('transactions', { type: 'دخل (in)', amount: inst.amount, category: `تحصيل قسط عميل ${inst.customer_id}`, date });
+                alert('تم التحصيل وتسجيله بالخزينة');
+                load();
+            };
+
+            const markLate = async (inst) => {
+                await dbEngine.update('installments', inst.id, { ...inst, status: 'متأخر' });
+                load();
+            };
+
+            return (
+                <div className="card p-6 h-full flex flex-col">
+                    <h2 className="text-xl font-black mb-4 flex items-center gap-2"><Icon name="Wallet"/> إدارة التحصيل والأقساط</h2>
+                    <div className="flex-1 overflow-y-auto">
+                        <table className="w-full text-right text-sm">
+                            <thead className="bg-slate-100 border-b"><tr><th className="p-3">العميل</th><th className="p-3">تاريخ الاستحقاق</th><th className="p-3">المبلغ</th><th className="p-3">الحالة</th><th className="p-3 text-center">إجراء</th></tr></thead>
+                            <tbody className="divide-y">
+                                {installments.map(i => {
+                                    const c = customers.find(x => x.id === i.customer_id);
+                                    const isLate = new Date(i.due_date) < new Date() && i.status !== 'متأخر';
+                                    return (
+                                        <tr key={i.id} className="hover:bg-slate-50">
+                                            <td className="p-3 font-bold">{c ? c.full_name : i.customer_id}</td>
+                                            <td className="p-3">{i.due_date}</td>
+                                            <td className="p-3 font-black text-brand-600">{i.amount}</td>
+                                            <td className="p-3"><span className={`px-2 py-1 rounded text-xs font-bold ${i.status==='متأخر'?'bg-red-100 text-red-700':'bg-warning-100 text-warning-700'}`}>{i.status}</span></td>
+                                            <td className="p-3 text-center flex justify-center gap-2">
+                                                <button onClick={() => handlePay(i)} className="bg-green-600 text-white px-3 py-1 rounded text-xs font-bold">تحصيل</button>
+                                                {isLate && <button onClick={() => markLate(i)} className="bg-red-600 text-white px-3 py-1 rounded text-xs font-bold">تسجيل كمتأخر</button>}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            );
+        }
+
+        function ExpensesModule() {
+            const [expenses, setExpenses] = useState([]);
+            const [form, setForm] = useState({ category: 'إدارية', amount: '', description: '' });
+
+            const load = async () => { setExpenses(await dbEngine.fetch('expenses')); };
+            useEffect(() => { load(); }, []);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                const date = new Date().toISOString().split('T')[0];
+                await dbEngine.insert('expenses', { ...form, date });
+                await dbEngine.insert('transactions', { type: 'خرج (out)', amount: Number(form.amount || 0), category: `مصروف: ${form.category}`, date });
+                setForm({ category: 'إدارية', amount: '', description: '' });
+                load();
+                alert('تم تسجيل المصروف وخصمه من الخزينة');
+            };
+
+            return (
+                <div className="flex gap-4 h-full">
+                    <div className="w-1/3 card p-6">
+                        <h2 className="text-lg font-black mb-4">تسجيل مصروف جديد</h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
+                            <div><label className="text-sm font-bold block mb-1">التصنيف</label><select value={form.category} onChange={e=>setForm({...form, category:e.target.value})} className="w-full p-2 border rounded"><option>مرتبات</option><option>مشتريات بضاعة</option><option>إدارية</option><option>تسويقية</option><option>نثريات</option></select></div>
+                            <div><label className="text-sm font-bold block mb-1">المبلغ</label><input type="number" required value={form.amount} onChange={e=>setForm({...form, amount:e.target.value})} className="w-full p-2 border rounded"/></div>
+                            <div><label className="text-sm font-bold block mb-1">البيان (التفاصيل)</label><input type="text" value={form.description} onChange={e=>setForm({...form, description:e.target.value})} className="w-full p-2 border rounded"/></div>
+                            <button type="submit" className="w-full bg-danger-600 text-white py-2 rounded font-bold hover:bg-danger-700">سحب من الخزينة وحفظ</button>
+                        </form>
+                    </div>
+                    <div className="flex-1 card p-6 flex flex-col">
+                        <h2 className="text-lg font-black mb-4">سجل المصروفات</h2>
+                        <div className="flex-1 overflow-y-auto">
+                            <table className="w-full text-right text-sm"><thead className="bg-slate-50 border-b"><tr><th className="p-2">التاريخ</th><th className="p-2">التصنيف</th><th className="p-2">المبلغ</th><th className="p-2">البيان</th></tr></thead>
+                            <tbody className="divide-y">{expenses.map(e=><tr key={e.id} className="hover:bg-slate-50"><td className="p-2">{e.date}</td><td className="p-2">{e.category}</td><td className="p-2 font-bold text-danger-600">{e.amount}</td><td className="p-2">{e.description}</td></tr>)}</tbody></table>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        function LegalModule() {
+            const [cases, setCases] = useState([]);
+            const [showForm, setShowForm] = useState(false);
+            const [form, setForm] = useState({ target_type: 'عميل', target_id: '', case_number: '', type: 'إيصال أمانة', status: 'قيد التجهيز' });
+
+            const load = async () => { setCases(await dbEngine.fetch('legal_cases')); };
+            useEffect(() => { load(); }, []);
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                await dbEngine.insert('legal_cases', form);
+                if (form.target_type === 'عميل') {
+                    const custs = await dbEngine.fetch('customers');
+                    const c = custs.find(x => x.id === form.target_id);
+                    if (c) await dbEngine.update('customers', c.id, { ...c, status: 'إجراء قانوني', risk_level: 'عالي' });
+                }
+                setShowForm(false);
+                setForm({ target_type: 'عميل', target_id: '', case_number: '', type: 'إيصال أمانة', status: 'قيد التجهيز' });
+                load();
+                alert('تم قيد القضية / الإجراء');
+            };
+
+            return (
+                <div className="card p-6 h-full flex flex-col relative">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-black flex items-center gap-2"><Icon name="Scale" className="text-legal-600"/> الشئون القانونية والنزاعات</h2>
+                        <button onClick={() => setShowForm(true)} className="bg-legal-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-legal-700">+ إجراء جديد</button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                        <table className="w-full text-right text-sm"><thead className="bg-slate-50 border-b"><tr><th className="p-3">رقم الملف</th><th className="p-3">الصفة</th><th className="p-3">كود الخصم</th><th className="p-3">نوع الإجراء</th><th className="p-3">الحالة</th></tr></thead>
+                        <tbody className="divide-y">{cases.map(c=><tr key={c.id} className="hover:bg-slate-50"><td className="p-3">{c.id}</td><td className="p-3">{c.target_type}</td><td className="p-3 font-bold">{c.target_id}</td><td className="p-3">{c.type}</td><td className="p-3"><span className="bg-purple-100 text-purple-700 px-2 py-1 rounded text-xs font-bold">{c.status}</span></td></tr>)}</tbody></table>
+                    </div>
+
+                    {showForm && (
+                        <div className="absolute inset-0 bg-white/90 backdrop-blur z-10 flex items-center justify-center">
+                            <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl shadow-2xl border w-96 space-y-4">
+                                <h3 className="font-black text-lg border-b pb-2">تسجيل إجراء قانوني</h3>
+                                <div><label className="text-xs font-bold block mb-1">صفة الخصم</label><select value={form.target_type} onChange={e=>setForm({...form, target_type:e.target.value})} className="w-full p-2 border rounded"><option>عميل</option><option>ضامن</option></select></div>
+                                <div><label className="text-xs font-bold block mb-1">كود الخصم (ID)</label><input type="text" required value={form.target_id} onChange={e=>setForm({...form, target_id:e.target.value})} className="w-full p-2 border rounded"/></div>
+                                <div><label className="text-xs font-bold block mb-1">رقم القضية</label><input type="text" required value={form.case_number} onChange={e=>setForm({...form, case_number:e.target.value})} className="w-full p-2 border rounded"/></div>
+                                <div><label className="text-xs font-bold block mb-1">نوع الإجراء</label><select value={form.type} onChange={e=>setForm({...form, type:e.target.value})} className="w-full p-2 border rounded"><option>إنذار</option><option>إيصال أمانة</option><option>شيك</option><option>حجز</option></select></div>
+                                <div><label className="text-xs font-bold block mb-1">الحالة</label><select value={form.status} onChange={e=>setForm({...form, status:e.target.value})} className="w-full p-2 border rounded"><option>قيد التجهيز</option><option>بالمحكمة</option><option>حكم</option><option>تصالح</option></select></div>
+                                <div className="flex gap-2 pt-2"><button type="submit" className="flex-1 bg-legal-600 text-white py-2 rounded font-bold">حفظ</button><button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-slate-200 py-2 rounded font-bold">إلغاء</button></div>
+                            </form>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        function MessagingModule() {
+            const [phone, setPhone] = useState('');
+            const [msgType, setMsgType] = useState('تذكير');
+            const templates = {
+                'تذكير': 'عميلنا العزيز، نذكركم باقتراب موعد استحقاق القسط الخاص بكم لدى سنتر عبدالله للتجارة. يرجى السداد في الموعد لتجنب غرامات التأخير.',
+                'تأكيد استلام': 'عميلنا العزيز، تم استلام الدفعة بنجاح. شكراً لالتزامكم مع سنتر عبدالله للتجارة.',
+                'إنذار قانوني': 'إنذار أخير: نظراً لتأخركم في السداد، تم تحويل ملفكم إلى الشئون القانونية بسنتر عبدالله لاتخاذ الإجراءات اللازمة حيال إيصالات الأمانة.'
+            };
+
+            const sendWhatsApp = () => {
+                if (!phone) return alert('أدخل رقم الهاتف');
+                const text = encodeURIComponent(templates[msgType]);
+                window.open(`https://wa.me/2${phone}?text=${text}`, '_blank');
+            };
+
+            return (
+                <div className="card p-6 max-w-lg mx-auto mt-10">
+                    <h2 className="text-xl font-black mb-6 flex items-center gap-2"><Icon name="MessageCircle" className="text-green-500"/> المراسلات وإشعارات الواتساب</h2>
+                    <div className="space-y-4">
+                        <div><label className="font-bold text-sm block mb-1">رقم الهاتف</label><input type="text" placeholder="مثال: 010..." value={phone} onChange={e=>setPhone(e.target.value)} className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-green-500"/></div>
+                        <div><label className="font-bold text-sm block mb-1">نوع الرسالة</label><select value={msgType} onChange={e=>setMsgType(e.target.value)} className="w-full p-3 border rounded-lg outline-none focus:ring-2 focus:ring-green-500"><option>تذكير</option><option>تأكيد استلام</option><option>إنذار قانوني</option></select></div>
+                        <div className="p-4 bg-slate-50 border rounded-lg text-sm text-slate-700">{templates[msgType]}</div>
+                        <button onClick={sendWhatsApp} className="w-full bg-green-500 text-white py-3 rounded-lg font-bold hover:bg-green-600 flex items-center justify-center gap-2">إرسال عبر WhatsApp</button>
+                    </div>
+                </div>
+            );
+        }
+
+        function DBManager() {
+            const [activeT, setActiveT] = useState('customers');
+            const [recs, setRecs] = useState([]);
+            const [showForm, setShowForm] = useState(false);
+            const [formData, setFormData] = useState({});
+
+            const load = async () => { setRecs(await dbEngine.fetch(activeT)); };
+            useEffect(() => { load(); }, [activeT]);
+
+            const handleSave = async (e) => {
+                e.preventDefault();
+                await dbEngine.insert(activeT, formData);
+                setShowForm(false);
+                setFormData({});
+                load();
+            };
+
+            return (
+                <div className="flex gap-4 h-full">
+                    <aside className="w-48 flex flex-col gap-2">
+                        {Object.keys(SCHEMA).map(k => (
+                            <button key={k} onClick={() => setActiveT(k)} className={`text-right p-3 rounded-xl text-sm font-bold transition ${activeT===k ? 'bg-brand-900 text-white shadow-md' : 'bg-white border text-slate-600 hover:bg-slate-50'}`}>{SCHEMA[k].title}</button>
+                        ))}
+                    </aside>
+                    <div className="flex-1 card flex flex-col relative overflow-hidden">
+                        <div className="p-4 border-b flex justify-between items-center bg-slate-50">
+                            <h3 className="font-black text-lg">{SCHEMA[activeT].title}</h3>
+                            <button onClick={() => setShowForm(true)} className="bg-brand-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-brand-700">+ إضافة سجل</button>
+                        </div>
+                        <div className="flex-1 overflow-auto">
+                            <table className="w-full text-right text-xs whitespace-nowrap"><thead className="bg-slate-100 border-b"><tr>{SCHEMA[activeT].fields.map(f=><th key={f.key} className="p-3">{f.label}</th>)}</tr></thead>
+                            <tbody className="divide-y">{recs.map(r=><tr key={r.id} className="hover:bg-blue-50">{SCHEMA[activeT].fields.map(f=><td key={f.key} className="p-3">{r[f.key] || '-'}</td>)}</tr>)}</tbody></table>
+                        </div>
+                        {showForm && (
+                            <div className="absolute inset-0 bg-white/95 backdrop-blur z-20 flex items-center justify-center">
+                                <form onSubmit={handleSave} className="bg-white p-6 rounded-2xl shadow-xl border w-96 max-h-[90vh] overflow-y-auto space-y-3">
+                                    <h3 className="font-black text-lg border-b pb-2 mb-4">إضافة - {SCHEMA[activeT].title}</h3>
+                                    {SCHEMA[activeT].fields.map(f => f.readOnly ? null : (
+                                        <div key={f.key}><label className="text-xs font-bold block mb-1">{f.label}</label>
+                                            {f.type==='select' ? (
+                                                <select required={f.req} onChange={e=>setFormData({...formData,[f.key]:e.target.value})} className="w-full p-2 border rounded"><option value="">اختر...</option>{f.opts.map(o=><option key={o}>{o}</option>)}</select>
+                                            ) : (
+                                                <input type={f.type} required={f.req} onChange={e=>setFormData({...formData,[f.key]:e.target.value})} className="w-full p-2 border rounded" />
+                                            )}
+                                        </div>
+                                    ))}
+                                    <div className="flex gap-2 pt-4"><button type="submit" className="flex-1 bg-brand-600 text-white py-2 rounded font-bold">حفظ</button><button type="button" onClick={() => setShowForm(false)} className="flex-1 bg-slate-200 py-2 rounded font-bold">إلغاء</button></div>
+                                </form>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        function App() {
+            const [ready, setReady] = useState(false);
+            const [activeTab, setActiveTab] = useState('dashboard');
+            useEffect(() => { dbEngine.init().then(() => setReady(true)); }, []);
+
+            if (!ready) return <div className="flex items-center justify-center h-screen font-black text-xl text-brand-900">جاري تهيئة مركز البيانات...</div>;
+
+            const tabs = [
+                {id:'dashboard', name:'لوحة الإدارة', icon:'Dashboard'},
+                {id:'pos', name:'المبيعات', icon:'ShoppingCart'},
+                {id:'collection', name:'التحصيل', icon:'Wallet'},
+                {id:'expenses', name:'المصروفات', icon:'Receipt'},
+                {id:'legal', name:'القانونية', icon:'Scale'},
+                {id:'msg', name:'المراسلات', icon:'MessageCircle'},
+                {id:'db', name:'البيانات المركزية', icon:'Database'}
+            ];
+
+            return (
+                <div className="h-screen flex flex-col">
+                    <header className="bg-brand-900 text-white p-4 flex justify-between items-center shadow-lg z-10">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-white text-brand-900 rounded-xl flex items-center justify-center font-black text-xl">X</div>
+                            <div>
+                                <h1 className="font-black text-lg leading-tight">EcoFine ERP</h1>
+                                <div className="text-xs text-brand-300">سنتر عبدالله للتجارة - إكس القابضة</div>
+                            </div>
+                        </div>
+                        <nav className="flex gap-2 bg-brand-800 p-1 rounded-xl">
+                            {tabs.map(t => (
+                                <button key={t.id} onClick={() => setActiveTab(t.id)} className={`px-4 py-2 rounded-lg text-sm flex items-center gap-2 transition-all ${activeTab===t.id ? 'bg-white text-brand-900 font-bold shadow-sm' : 'text-brand-100 hover:bg-brand-700'}`}>
+                                    <Icon name={t.icon} size={16}/> {t.name}
+                                </button>
+                            ))}
+                        </nav>
+                        <div className="flex items-center gap-2 text-sm"><Icon name="User"/> <span className="font-bold">مستر إكس</span></div>
+                    </header>
+                    <main className="flex-1 p-6 overflow-hidden">
+                        {activeTab === 'dashboard' && <DashboardModule />}
+                        {activeTab === 'pos' && <SalesModule />}
+                        {activeTab === 'collection' && <CollectionModule />}
+                        {activeTab === 'expenses' && <ExpensesModule />}
+                        {activeTab === 'legal' && <LegalModule />}
+                        {activeTab === 'msg' && <MessagingModule />}
+                        {activeTab === 'db' && <DBManager />}
+                    </main>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
