@@ -232,7 +232,11 @@
             const addToCart = (p) => {
                 if (Number(p.stock || 0) <= 0) return alert('المنتج غير متوفر');
                 const exist = cart.find(i => i.id === p.id);
-                if (exist) setCart(cart.map(i => i.id === p.id ? { ...i, qty: i.qty + 1 } : i));
+                if (exist) {
+                    const nextQty = exist.qty + 1;
+                    if (nextQty > Number(p.stock || 0)) return alert('الكمية المطلوبة أكبر من المخزون المتاح');
+                    setCart(cart.map(i => i.id === p.id ? { ...i, qty: nextQty } : i));
+                }
                 else setCart([...cart, { ...p, qty: 1 }]);
             };
 
@@ -245,8 +249,16 @@
                 const total = calculateTotal();
                 const paid = saleType === 'كاش' ? total : Number(downPayment || 0);
                 const monthsCount = Number(months || 0);
+                if (paid < 0) return alert('المقدم يجب أن يكون رقمًا غير سالب');
                 if (paid > total) return alert('المقدم أكبر من إجمالي الفاتورة');
-                if (saleType === 'تقسيط' && monthsCount <= 0) return alert('عدد الأشهر يجب أن يكون أكبر من صفر');
+                if (saleType === 'تقسيط' && (!Number.isInteger(monthsCount) || monthsCount <= 0)) return alert('عدد الأشهر يجب أن يكون عددًا صحيحًا أكبر من صفر');
+
+                for (const item of cart) {
+                    const prd = products.find(p => p.id === item.id);
+                    if (!prd || Number(prd.stock || 0) < item.qty) {
+                        return alert(`المنتج ${item.name} لا يملك مخزونًا كافيًا`);
+                    }
+                }
 
                 const remaining = total - paid;
                 const date = new Date().toISOString().split('T')[0];
@@ -311,8 +323,8 @@
                             </select>
                             {saleType === 'تقسيط' && (
                                 <div className="flex gap-2">
-                                    <input type="number" placeholder="المقدم" value={downPayment} onChange={e=>setDownPayment(e.target.value)} className="w-1/2 p-2 border rounded-lg" />
-                                    <input type="number" placeholder="عدد الأشهر" value={months} onChange={e=>setMonths(e.target.value)} className="w-1/2 p-2 border rounded-lg" />
+                                    <input type="number" min="0" placeholder="المقدم" value={downPayment} onChange={e=>setDownPayment(e.target.value)} className="w-1/2 p-2 border rounded-lg" />
+                                    <input type="number" min="1" step="1" placeholder="عدد الأشهر" value={months} onChange={e=>setMonths(e.target.value)} className="w-1/2 p-2 border rounded-lg" />
                                 </div>
                             )}
                             <div className="bg-brand-900 text-white p-3 rounded-lg flex justify-between items-center mt-2"><span>الإجمالي:</span><span className="text-xl font-black">{calculateTotal()}</span></div>
