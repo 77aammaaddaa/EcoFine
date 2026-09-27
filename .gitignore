@@ -1,1 +1,46 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
+node_modules
+dist
+dist-ssr
+*.local
+
+# Local-only / private data
+archive/
+private/
+secrets/
+.env
+.env.*
+*.key
+*.pem
+*.p12
+*.crt
+*.csr
+local-data/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# Browser app static generated output
+coverage/
+
+# Legacy local-only build artifacts
+**/legacy-cache/**
+**/*.bak
+**/*.orig
+**/*.tmp
